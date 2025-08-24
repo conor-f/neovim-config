@@ -62,57 +62,49 @@
         # All tools combined
         allTools = lspServers ++ formatters ++ additionalTools;
 
-        # Create neovim wrapper script
-        nvimWrapper = pkgs.writeShellScriptBin "nvim" ''
-          export PATH=${pkgs.lib.makeBinPath allTools}:$PATH
-          
-          # Always use the user's standard neovim config locations
-          # This assumes you have the config installed at ~/.config/nvim
-          exec ${pkgs.neovim}/bin/nvim "$@"
-        '';
-
-      in {
-        # Default package - just the tools wrapper
-        packages.default = nvimWrapper;
-        
-        # Separate package with bundled config (for testing)
-        packages.nvim-with-config = pkgs.symlinkJoin {
+        # Create fully self-contained neovim with bundled config
+        nvimWrapper = pkgs.symlinkJoin {
           name = "nvim-with-config";
-          paths = [ nvimWrapper ];
+          paths = [ pkgs.neovim ];
           buildInputs = [ pkgs.makeWrapper ];
           postBuild = ''
+            # Create config directory structure
+            mkdir -p $out/share/nvim-config
+            cp -r ${self}/* $out/share/nvim-config/
+            
+            # Wrap nvim to use bundled config and tools
             wrapProgram $out/bin/nvim \
-              --set XDG_CONFIG_HOME ${self}
+              --set PATH "${pkgs.lib.makeBinPath allTools}:$PATH" \
+              --set XDG_CONFIG_HOME "$out/share" \
+              --set NVIM_APPNAME "nvim-config"
           '';
         };
 
-        # Development shell with all tools
+      in {
+        # Default package - fully self-contained
+        packages.default = nvimWrapper;
+
+        # Development shell for working on this config itself
         devShells.default = pkgs.mkShell {
           buildInputs = [ 
             pkgs.neovim
           ] ++ allTools;
           
           shellHook = ''
-            echo "🚀 Neovim development environment loaded!"
+            echo "🚀 Neovim config development environment!"
             echo "📦 Available language servers: typescript, html/css/json, yaml, dockerfile, bash, python, lua"
             echo "🎨 Available formatters: prettier, black, stylua, shfmt, jq"
             echo "🔧 Additional tools: ripgrep, fd, fzf, git, just"
             echo ""
-            echo "💡 Use 'nvim' to start Neovim with your ~/.config/nvim config"
-            echo "📝 All language servers and formatters are available in PATH"
+            echo "💡 This shell is for developing the config itself"
+            echo "📝 Use 'nix run .' to test the bundled config"
           '';
         };
 
-        # App for nix run - uses your local config
+        # App for nix run - fully self-contained
         apps.default = {
           type = "app";
           program = "${nvimWrapper}/bin/nvim";
-        };
-        
-        # App for testing with bundled config
-        apps.nvim-with-config = {
-          type = "app";
-          program = "${self.packages.${system}.nvim-with-config}/bin/nvim";
         };
       });
 }
