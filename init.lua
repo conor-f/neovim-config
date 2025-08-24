@@ -243,19 +243,7 @@ require('lazy').setup({
   -- options to `gitsigns.nvim`. This is equivalent to the following Lua:
   --    require('gitsigns').setup({ ... })
   --
-  -- See `:help gitsigns` to understand what the configuration keys do
-  { -- Adds git related signs to the gutter, as well as utilities for managing changes
-    'lewis6991/gitsigns.nvim',
-    opts = {
-      signs = {
-        add = { text = '+' },
-        change = { text = '~' },
-        delete = { text = '_' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-      },
-    },
-  },
+  -- NOTE: gitsigns is configured in lua/kickstart/plugins/gitsigns.lua with enhanced keymaps
 
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
@@ -1043,32 +1031,21 @@ require('lazy').setup({
 
 -- Custom formatting keybindings
 vim.keymap.set('v', '<leader>fj', function()
-  -- Format selection as JSON
-  vim.cmd([[s/\v(['"])?(\w+)\1:/"\2":/g]])
-  vim.cmd([[s/'/"/g]])
-  -- Use conform to format as JSON if available, otherwise use built-in formatting
-  require('conform').format({ formatters = { 'jq' }, range = { 
-    start = { vim.fn.line("'<"), 0 }, 
-    ['end'] = { vim.fn.line("'>"), -1 } 
-  }})
+  -- Simple JSON formatting for visual selection
+  vim.cmd([[:'<,'>s/\v(['"])?(\w+)\1:/"\2":/g]])
+  vim.cmd([[:'<,'>s/'/"/g]])
+  vim.cmd([[:'<,'>s/\v:\s*true/: true/g]])
+  vim.cmd([[:'<,'>s/\v:\s*false/: false/g]])
+  vim.cmd([[:'<,'>s/\v:\s*None/: null/g]])
 end, { desc = '[F]ormat selection as [J]SON' })
 
 vim.keymap.set('v', '<leader>fp', function()
-  -- Format selection as Python dict
-  vim.cmd([[s/"/'/g]])
-  vim.cmd([[s/\v:\s*true/: True/g]])
-  vim.cmd([[s/\v:\s*false/: False/g]])
-  vim.cmd([[s/\v:\s*null/: None/g]])
-  -- Use conform to format the selection
-  require('conform').format({ lsp_format = 'fallback', range = { 
-    start = { vim.fn.line("'<"), 0 }, 
-    ['end'] = { vim.fn.line("'>"), -1 } 
-  }})
+  -- Simple Python dict formatting for visual selection
+  vim.cmd([[:'<,'>s/"/'/g]])
+  vim.cmd([[:'<,'>s/\v:\s*true/: True/g]])
+  vim.cmd([[:'<,'>s/\v:\s*false/: False/g]])
+  vim.cmd([[:'<,'>s/\v:\s*null/: None/g]])
 end, { desc = '[F]ormat selection as [P]ython dict' })
-
--- Simple alternative versions that work without complex formatting
-vim.keymap.set('v', '<leader>Fj', ':<C-u>s/\\v([\'"])?(\\w+)\\1:/\"\\2\":/g<CR>:<C-u>s/\'/\"/g<CR>', { desc = 'Simple JSON format' })
-vim.keymap.set('v', '<leader>Fp', ':<C-u>s/\"/\'/g<CR>:<C-u>s/\\v:\\s*true/: True/g<CR>:<C-u>s/\\v:\\s*false/: False/g<CR>:<C-u>s/\\v:\\s*null/: None/g<CR>', { desc = 'Simple Python dict format' })
 
 vim.o.foldmethod = 'expr'
 vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
