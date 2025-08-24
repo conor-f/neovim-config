@@ -4,11 +4,11 @@
 { config, pkgs, lib, ... }:
 
 let
-  # Import your Neovim flake
-  nvimFlake = builtins.getFlake "path:/Users/personal/.config/nvim";
+  # Import your Neovim flake from GitHub
+  nvimFlake = builtins.getFlake "github:conor-f/neovim-config";
   
-  # Or use the GitHub repo directly:
-  # nvimFlake = builtins.getFlake "github:conor-f/neovim-config";
+  # Or use a local path if you cloned the repo:
+  # nvimFlake = builtins.getFlake "path:/path/to/neovim-config";
   
 in {
   # Option 1: Use the flake package directly
@@ -31,11 +31,24 @@ in {
     extraPackages = with pkgs; [
       # LSP servers
       lua-language-server
+      nodePackages.typescript-language-server
+      nodePackages.vscode-langservers-extracted  # html, css, json
+      nodePackages.yaml-language-server
+      nodePackages.dockerfile-language-server-nodejs
+      nodePackages.vue-language-server
+      nodePackages.bash-language-server
+      nodePackages.pyright
       
-      # Formatters
+      # Formatters and tools
       stylua
+      prettierd
+      nodePackages.prettier
+      black
+      isort
+      shfmt
+      jq
       
-      # Tools used by plugins
+      # Core tools
       ripgrep
       fd
       fzf
@@ -44,6 +57,10 @@ in {
       unzip
       gcc
       gnumake
+      nodejs
+      python3
+      python3Packages.pip
+      just
     ];
   };
   

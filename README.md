@@ -30,7 +30,7 @@ A modern, well-documented Neovim configuration with comprehensive language suppo
 
 2. **Clone this configuration**:
    ```bash
-   git clone https://github.com/your-username/neovim-config.git ~/.config/nvim
+   git clone https://github.com/conor-f/neovim-config.git ~/.config/nvim
    ```
 
 3. **Start Neovim**:
@@ -39,6 +39,184 @@ A modern, well-documented Neovim configuration with comprehensive language suppo
    ```
    
    Plugins will automatically install on first run.
+
+## Nix Installation & Usage
+
+This configuration includes comprehensive Nix support for reproducible development environments.
+
+### Quick Start with Nix
+
+Try the configuration without installing:
+```bash
+nix run github:conor-f/neovim-config
+```
+
+Enter a development shell with all tools:
+```bash
+nix develop github:conor-f/neovim-config
+```
+
+### Nix Flake Integration
+
+Add to your system flake inputs:
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    neovim-config.url = "github:conor-f/neovim-config";
+  };
+  
+  outputs = { self, nixpkgs, neovim-config, ... }: {
+    # Your system configuration
+    nixosConfigurations.yourhost = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        {
+          environment.systemPackages = [
+            neovim-config.packages.x86_64-linux.default
+          ];
+        }
+      ];
+    };
+  };
+}
+```
+
+### Home Manager Integration
+
+Add to your `home.nix`:
+```nix
+{ config, pkgs, ... }:
+
+{
+  imports = [
+    # Import the home-manager module
+    (builtins.getFlake "github:conor-f/neovim-config").homeManagerModules.default
+  ];
+  
+  # Or manually configure:
+  home.packages = [
+    (builtins.getFlake "github:conor-f/neovim-config").packages.${pkgs.system}.default
+  ];
+}
+```
+
+Or copy the provided `home-manager.nix` file to your home-manager configuration.
+
+### Development Environments
+
+#### Project-specific shell
+
+Create a `shell.nix` in your project:
+```nix
+{ pkgs ? import <nixpkgs> {} }:
+
+let
+  neovim-config = builtins.getFlake "github:conor-f/neovim-config";
+in
+pkgs.mkShell {
+  buildInputs = [
+    neovim-config.packages.${pkgs.system}.default
+    # Your project-specific dependencies
+  ];
+}
+```
+
+#### Flake-based development
+
+Create a `flake.nix` for your project:
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    neovim-config.url = "github:conor-f/neovim-config";
+  };
+  
+  outputs = { nixpkgs, neovim-config, ... }:
+    let
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+    in {
+      devShells.${system}.default = pkgs.mkShell {
+        buildInputs = [
+          neovim-config.packages.${system}.default
+          # Add your project dependencies here
+        ];
+      };
+    };
+}
+```
+
+### What's Included in the Nix Environment
+
+The Nix flake automatically provides:
+
+**Language Servers:**
+- TypeScript/JavaScript (typescript-language-server)
+- HTML/CSS/JSON (vscode-langservers-extracted)
+- YAML (yaml-language-server) 
+- Docker (dockerfile-language-server)
+- Vue.js (vue-language-server)
+- Bash (bash-language-server)
+- Python (pyright)
+- Lua (lua-language-server)
+
+**Formatters:**
+- Prettier/Prettierd (JS/TS/JSON/YAML/CSS/HTML)
+- Black + isort (Python)
+- stylua (Lua)
+- shfmt (Shell scripts)
+- jq (JSON processing)
+
+**Development Tools:**
+- Node.js and Python runtimes
+- ripgrep, fd, fzf for telescope
+- git, curl, unzip, gcc, make
+- just (for justfile support)
+
+### Nix Configuration Files
+
+- `flake.nix` - Main flake definition with all dependencies
+- `home-manager.nix` - Home Manager integration example
+- `flake.lock` - Pinned dependency versions for reproducibility
+
+### Customizing the Nix Setup
+
+1. **Fork the repository**
+2. **Modify `flake.nix`** to add/remove tools:
+   ```nix
+   # Add your preferred tools
+   additionalTools = with pkgs; [
+     ripgrep
+     fd
+     # Add more tools here
+   ];
+   ```
+3. **Update flake.lock**:
+   ```bash
+   nix flake lock --update-input nixpkgs
+   ```
+
+### Troubleshooting Nix Setup
+
+**Enable flakes** (if not already enabled):
+```bash
+mkdir -p ~/.config/nix
+echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
+```
+
+**Check what's available**:
+```bash
+nix flake show github:conor-f/neovim-config
+```
+
+**Build locally**:
+```bash
+git clone https://github.com/conor-f/neovim-config.git
+cd neovim-config
+nix build
+./result/bin/nvim
+```
 
 ## Configuration Structure
 
