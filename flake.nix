@@ -12,17 +12,19 @@
         pkgs = nixpkgs.legacyPackages.${system};
         
         # Define LSP servers and tools
-        lspServers = with pkgs.nodePackages; [
-          # Language servers
+        lspServers = (with pkgs.nodePackages; [
+          # Node-based language servers
           typescript-language-server
           vscode-langservers-extracted  # html, css, json, eslint
           yaml-language-server
           dockerfile-language-server-nodejs
-          vue-language-server
           bash-language-server
-          pyright
-        ] ++ (with pkgs; [
+        ]) ++ (with pkgs; [
+          # Other language servers
           lua-language-server
+          pyright  # Python language server
+          # Note: Vue language server (volar) needs to be installed via Mason in Neovim
+          # as the Nix package is deprecated
         ]);
 
         # Formatters and linters
@@ -63,8 +65,16 @@
         # Create neovim wrapper script
         nvimWrapper = pkgs.writeShellScriptBin "nvim" ''
           export PATH=${pkgs.lib.makeBinPath allTools}:$PATH
-          cd ${self}
-          exec ${pkgs.neovim}/bin/nvim -u ${self}/init.lua "$@"
+          # Use the config from the current directory or user's config
+          if [ -f "./init.lua" ]; then
+            exec ${pkgs.neovim}/bin/nvim -u ./init.lua "$@"
+          elif [ -d "$HOME/.config/nvim" ]; then
+            NVIM_APPNAME=nvim exec ${pkgs.neovim}/bin/nvim "$@"
+          else
+            # Fallback to the config from this flake
+            export XDG_CONFIG_HOME=${self}
+            exec ${pkgs.neovim}/bin/nvim "$@"
+          fi
         '';
 
       in {

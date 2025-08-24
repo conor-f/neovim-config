@@ -31,13 +31,13 @@ in {
     extraPackages = with pkgs; [
       # LSP servers
       lua-language-server
+      pyright  # Python language server
       nodePackages.typescript-language-server
       nodePackages.vscode-langservers-extracted  # html, css, json
       nodePackages.yaml-language-server
       nodePackages.dockerfile-language-server-nodejs
-      nodePackages.vue-language-server
       nodePackages.bash-language-server
-      nodePackages.pyright
+      # Note: Vue language server (volar) will be installed via Mason as the Nix package is deprecated
       
       # Formatters and tools
       stylua
