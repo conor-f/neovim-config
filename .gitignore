@@ -1,0 +1,28 @@
+tags
+test.sh
+.luarc.json
+nvim
+
+spell/
+
+# Nix build results
+result
+result-*
+
+# Lazy.nvim data directory 
+.lazy/
+
+# Mason installations (not needed with Nix)
+mason/
+
+# Any local overrides
+local.lua
+
+# Vim temporary files
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db
