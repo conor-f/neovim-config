@@ -1,3 +1,7 @@
+print('🚀 Loading Neovim configuration from Nix environment...')
+print('Config location: ' .. (os.getenv('XDG_CONFIG_HOME') or 'unknown'))
+print('NVIM_APPNAME: ' .. (os.getenv('NVIM_APPNAME') or 'none'))
+
 --[[
 
 =====================================================================
@@ -102,8 +106,11 @@ vim.g.have_nerd_font = true
 --  For more options, you can see `:help option-list`
 
 -- Make line numbers default
+print('Setting up basic Neovim options...')
 vim.opt.number = true
 vim.opt.relativenumber = true
+print('Line numbers enabled: ' .. tostring(vim.opt.number:get()))
+print('Relative numbers enabled: ' .. tostring(vim.opt.relativenumber:get()))
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = ''
@@ -218,16 +225,46 @@ vim.fn.mkdir(vim.fn.stdpath 'data', 'p')
 
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
   print('Lazy.nvim not found, cloning...')
-  local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
-  local out = vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
+  
+  -- Check if git is available
+  local git_check = vim.fn.system('which git')
   if vim.v.shell_error ~= 0 then
-    error('Error cloning lazy.nvim:\n' .. out)
+    error('Git not found in PATH. Git is required to install plugins.')
   end
-  print('Lazy.nvim cloned successfully')
+  print('Git found: ' .. vim.trim(git_check))
+  
+  local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
+  print('Cloning from: ' .. lazyrepo)
+  print('To: ' .. lazypath)
+  
+  local out = vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
+  print('Git output: ' .. out)
+  
+  if vim.v.shell_error ~= 0 then
+    error('Error cloning lazy.nvim (exit code: ' .. vim.v.shell_error .. '):\n' .. out)
+  end
+  
+  -- Verify the clone worked
+  if (vim.uv or vim.loop).fs_stat(lazypath) then
+    print('Lazy.nvim cloned successfully')
+  else
+    error('Lazy.nvim clone appeared to succeed but directory not found: ' .. lazypath)
+  end
 else
   print('Lazy.nvim found at: ' .. lazypath)
-end ---@diagnostic disable-next-line: undefined-field
+end
+
+-- Add to runtime path
+print('Adding to runtimepath: ' .. lazypath)
+---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
+
+-- Test that lazy is actually loadable
+local lazy_ok, lazy = pcall(require, 'lazy')
+if not lazy_ok then
+  error('Failed to load lazy.nvim after adding to rtp: ' .. tostring(lazy))
+end
+print('Lazy.nvim loaded successfully')
 
 -- [[ Configure and install plugins ]]
 --
