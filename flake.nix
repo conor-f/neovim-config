@@ -65,21 +65,26 @@
         # Create neovim wrapper script
         nvimWrapper = pkgs.writeShellScriptBin "nvim" ''
           export PATH=${pkgs.lib.makeBinPath allTools}:$PATH
-          # Use the config from the current directory or user's config
-          if [ -f "./init.lua" ]; then
-            exec ${pkgs.neovim}/bin/nvim -u ./init.lua "$@"
-          elif [ -d "$HOME/.config/nvim" ]; then
-            NVIM_APPNAME=nvim exec ${pkgs.neovim}/bin/nvim "$@"
-          else
-            # Fallback to the config from this flake
-            export XDG_CONFIG_HOME=${self}
-            exec ${pkgs.neovim}/bin/nvim "$@"
-          fi
+          
+          # Always use the user's standard neovim config locations
+          # This assumes you have the config installed at ~/.config/nvim
+          exec ${pkgs.neovim}/bin/nvim "$@"
         '';
 
       in {
-        # Default package
+        # Default package - just the tools wrapper
         packages.default = nvimWrapper;
+        
+        # Separate package with bundled config (for testing)
+        packages.nvim-with-config = pkgs.symlinkJoin {
+          name = "nvim-with-config";
+          paths = [ nvimWrapper ];
+          buildInputs = [ pkgs.makeWrapper ];
+          postBuild = ''
+            wrapProgram $out/bin/nvim \
+              --set XDG_CONFIG_HOME ${self}
+          '';
+        };
 
         # Development shell with all tools
         devShells.default = pkgs.mkShell {
@@ -89,19 +94,25 @@
           
           shellHook = ''
             echo "🚀 Neovim development environment loaded!"
-            echo "📦 Available language servers: typescript, html/css/json, yaml, dockerfile, vue, bash, python, lua"
+            echo "📦 Available language servers: typescript, html/css/json, yaml, dockerfile, bash, python, lua"
             echo "🎨 Available formatters: prettier, black, stylua, shfmt, jq"
             echo "🔧 Additional tools: ripgrep, fd, fzf, git, just"
             echo ""
-            echo "💡 Use 'nvim' to start with full language support"
-            export NVIM_APPNAME="nvim-config"
+            echo "💡 Use 'nvim' to start Neovim with your ~/.config/nvim config"
+            echo "📝 All language servers and formatters are available in PATH"
           '';
         };
 
-        # App for nix run
+        # App for nix run - uses your local config
         apps.default = {
           type = "app";
           program = "${nvimWrapper}/bin/nvim";
+        };
+        
+        # App for testing with bundled config
+        apps.nvim-with-config = {
+          type = "app";
+          program = "${self.packages.${system}.nvim-with-config}/bin/nvim";
         };
       });
 }

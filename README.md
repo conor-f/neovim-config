@@ -46,14 +46,31 @@ This configuration includes comprehensive Nix support for reproducible developme
 
 ### Quick Start with Nix
 
-Try the configuration without installing:
+**Option 1: Install to your profile (recommended)**
 ```bash
-nix run github:conor-f/neovim-config
+# First, clone this config to ~/.config/nvim
+git clone https://github.com/conor-f/neovim-config.git ~/.config/nvim
+
+# Then install the tools wrapper to your profile
+nix profile add github:conor-f/neovim-config
+
+# Now 'nvim' command has all language servers and formatters available
+nvim
 ```
 
-Enter a development shell with all tools:
+**Option 2: Development shell**
 ```bash
 nix develop github:conor-f/neovim-config
+# All tools are available, use with your existing ~/.config/nvim
+```
+
+**Option 3: Try without installing**
+```bash
+# Test the bundled config (read-only, for demonstration)
+nix run github:conor-f/neovim-config#nvim-with-config
+
+# Or just run with tools available (uses your ~/.config/nvim)
+nix run github:conor-f/neovim-config
 ```
 
 ### Nix Flake Integration
