@@ -674,24 +674,12 @@ require('lazy').setup({
       -- You can add other tools here that you want Mason to install
       -- for you, so that they are available from within Neovim.
       local ensure_installed = vim.tbl_keys(servers or {})
+      -- Only add tools that aren't already provided by Nix
+      -- Most tools are provided by the Nix environment
       vim.list_extend(ensure_installed, {
-        -- Lua formatter
-        'stylua',
-        
-        -- Web development formatters
-        'prettierd', -- Fast prettier
-        'prettier', -- Fallback formatter
-        
-        -- Python formatters and tools
-        'black', -- Python formatter
-        'isort', -- Python import sorter
-        
-        -- Shell script formatter
-        'shfmt',
-        
-        -- Additional formatters
-        'dprint', -- Multi-language formatter
-        'jq', -- JSON formatter for custom keybindings
+        -- Vue language server (not available in our Nix setup)
+        'vue-language-server',
+        -- Any other tools that might be missing can be added here
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -956,8 +944,9 @@ require('lazy').setup({
       ensure_installed = { 
         'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc',
         -- Additional languages for comprehensive support
-        'javascript', 'typescript', 'tsx', 'jsx', 'css', 'json', 'yaml', 
+        'javascript', 'typescript', 'tsx', 'css', 'json', 'yaml', 
         'python', 'dockerfile', 'vue', 'just'
+        -- Note: jsx parser is not available, tsx handles JSX in TypeScript files
       },
       -- Autoinstall languages that are not installed
       auto_install = true,

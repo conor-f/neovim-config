@@ -57,28 +57,36 @@
           
           # Just for justfile support
           just
+          
+          # Tree-sitter CLI for parser management
+          tree-sitter
         ];
 
         # All tools combined
         allTools = lspServers ++ formatters ++ additionalTools;
 
         # Create fully self-contained neovim with bundled config
-        nvimWrapper = pkgs.symlinkJoin {
-          name = "nvim-with-config";
-          paths = [ pkgs.neovim ];
-          buildInputs = [ pkgs.makeWrapper ];
-          postBuild = ''
-            # Create config directory structure
-            mkdir -p $out/share/nvim-config
-            cp -r ${self}/* $out/share/nvim-config/
-            
-            # Wrap nvim to use bundled config and tools
-            wrapProgram $out/bin/nvim \
-              --set PATH "${pkgs.lib.makeBinPath allTools}:$PATH" \
-              --set XDG_CONFIG_HOME "$out/share" \
-              --set NVIM_APPNAME "nvim-config"
-          '';
-        };
+        nvimWrapper = pkgs.writeShellScriptBin "nvim" ''
+          # Create writable directories in user's home for nvim data
+          export NVIM_APPNAME="nvim-nix-config"
+          export XDG_DATA_HOME="''${XDG_DATA_HOME:-$HOME/.local/share}"
+          export XDG_STATE_HOME="''${XDG_STATE_HOME:-$HOME/.local/state}" 
+          export XDG_CACHE_HOME="''${XDG_CACHE_HOME:-$HOME/.cache}"
+          
+          # Create the directories if they don't exist
+          mkdir -p "$XDG_DATA_HOME/$NVIM_APPNAME"
+          mkdir -p "$XDG_STATE_HOME/$NVIM_APPNAME"
+          mkdir -p "$XDG_CACHE_HOME/$NVIM_APPNAME"
+          
+          # Set up config from the Nix store (read-only)
+          export XDG_CONFIG_HOME="${self}"
+          
+          # Ensure all tools are in PATH
+          export PATH="${pkgs.lib.makeBinPath allTools}:$PATH"
+          
+          # Run neovim with the bundled config
+          exec ${pkgs.neovim}/bin/nvim "$@"
+        '';
 
       in {
         # Default package - fully self-contained
