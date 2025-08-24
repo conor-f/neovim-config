@@ -615,23 +615,54 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
-        -- gopls = {},
-        -- pyright = {},
-        -- rust_analyzer = {},
-        -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
-        --
-        -- Some languages (like typescript) have entire language plugins that can be useful:
-        --    https://github.com/pmizio/typescript-tools.nvim
-        --
-        -- But for many setups, the LSP (`ts_ls`) will work just fine
-        -- ts_ls = {},
-        --
-
+        -- Language servers for comprehensive development support
+        
+        -- Web development
+        ts_ls = {}, -- TypeScript/JavaScript
+        html = {}, -- HTML
+        cssls = {}, -- CSS
+        jsonls = {}, -- JSON
+        
+        -- React/JSX support via TypeScript server
+        -- ts_ls handles JSX and TSX files
+        
+        -- Python
+        pyright = {
+          settings = {
+            python = {
+              analysis = {
+                autoSearchPaths = true,
+                useLibraryCodeForTypes = true,
+                diagnosticMode = 'workspace',
+              },
+            },
+          },
+        },
+        
+        -- Docker
+        dockerls = {},
+        docker_compose_language_service = {},
+        
+        -- YAML
+        yamlls = {
+          settings = {
+            yaml = {
+              schemas = {
+                ['https://json.schemastore.org/github-workflow.json'] = '/.github/workflows/*',
+                ['https://json.schemastore.org/docker-compose.json'] = '/docker-compose*.yml',
+              },
+            },
+          },
+        },
+        
+        -- Shell scripting
+        bashls = {},
+        
+        -- Vue.js
+        volar = {},
+        
+        -- Lua (for Neovim configuration)
         lua_ls = {
-          -- cmd = {...},
-          -- filetypes = { ...},
-          -- capabilities = {},
           settings = {
             Lua = {
               completion = {
@@ -656,7 +687,23 @@ require('lazy').setup({
       -- for you, so that they are available from within Neovim.
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
-        'stylua', -- Used to format Lua code
+        -- Lua formatter
+        'stylua',
+        
+        -- Web development formatters
+        'prettierd', -- Fast prettier
+        'prettier', -- Fallback formatter
+        
+        -- Python formatters and tools
+        'black', -- Python formatter
+        'isort', -- Python import sorter
+        
+        -- Shell script formatter
+        'shfmt',
+        
+        -- Additional formatters
+        'dprint', -- Multi-language formatter
+        'jq', -- JSON formatter for custom keybindings
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -708,14 +755,32 @@ require('lazy').setup({
         }
       end,
       formatters_by_ft = {
+        -- Lua
         lua = { 'stylua' },
-        -- javascript = { 'prettierd', 'prettier', stop_after_first = true },
-        -- typescript = { 'prettierd', 'prettier', stop_after_first = true },
-        -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
-        --
-        -- You can use 'stop_after_first' to run the first available formatter from the list
-        -- javascript = { "prettierd", "prettier", stop_after_first = true },
+        
+        -- Web development
+        javascript = { 'prettierd', 'prettier', stop_after_first = true },
+        typescript = { 'prettierd', 'prettier', stop_after_first = true },
+        javascriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+        typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+        vue = { 'prettierd', 'prettier', stop_after_first = true },
+        css = { 'prettierd', 'prettier', stop_after_first = true },
+        html = { 'prettierd', 'prettier', stop_after_first = true },
+        json = { 'prettierd', 'prettier', stop_after_first = true },
+        jsonc = { 'prettierd', 'prettier', stop_after_first = true },
+        
+        -- Python (run isort first, then black)
+        python = { 'isort', 'black' },
+        
+        -- YAML
+        yaml = { 'prettierd', 'prettier', stop_after_first = true },
+        
+        -- Shell scripts
+        sh = { 'shfmt' },
+        bash = { 'shfmt' },
+        
+        -- Docker
+        dockerfile = { 'dprint', stop_after_first = true },
       },
     },
   },
@@ -900,7 +965,12 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = { 
+        'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc',
+        -- Additional languages for comprehensive support
+        'javascript', 'typescript', 'tsx', 'jsx', 'css', 'json', 'yaml', 
+        'python', 'dockerfile', 'vue', 'just'
+      },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -932,18 +1002,18 @@ require('lazy').setup({
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
-  -- require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  require 'kickstart.plugins.debug',
+  require 'kickstart.plugins.indent_line',
+  require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.autopairs',
+  require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
-  --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  --  Load custom plugins from lua/custom/plugins/*.lua
+  { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
@@ -970,6 +1040,35 @@ require('lazy').setup({
     },
   },
 })
+
+-- Custom formatting keybindings
+vim.keymap.set('v', '<leader>fj', function()
+  -- Format selection as JSON
+  vim.cmd([[s/\v(['"])?(\w+)\1:/"\2":/g]])
+  vim.cmd([[s/'/"/g]])
+  -- Use conform to format as JSON if available, otherwise use built-in formatting
+  require('conform').format({ formatters = { 'jq' }, range = { 
+    start = { vim.fn.line("'<"), 0 }, 
+    ['end'] = { vim.fn.line("'>"), -1 } 
+  }})
+end, { desc = '[F]ormat selection as [J]SON' })
+
+vim.keymap.set('v', '<leader>fp', function()
+  -- Format selection as Python dict
+  vim.cmd([[s/"/'/g]])
+  vim.cmd([[s/\v:\s*true/: True/g]])
+  vim.cmd([[s/\v:\s*false/: False/g]])
+  vim.cmd([[s/\v:\s*null/: None/g]])
+  -- Use conform to format the selection
+  require('conform').format({ lsp_format = 'fallback', range = { 
+    start = { vim.fn.line("'<"), 0 }, 
+    ['end'] = { vim.fn.line("'>"), -1 } 
+  }})
+end, { desc = '[F]ormat selection as [P]ython dict' })
+
+-- Simple alternative versions that work without complex formatting
+vim.keymap.set('v', '<leader>Fj', ':<C-u>s/\\v([\'"])?(\\w+)\\1:/\"\\2\":/g<CR>:<C-u>s/\'/\"/g<CR>', { desc = 'Simple JSON format' })
+vim.keymap.set('v', '<leader>Fp', ':<C-u>s/\"/\'/g<CR>:<C-u>s/\\v:\\s*true/: True/g<CR>:<C-u>s/\\v:\\s*false/: False/g<CR>:<C-u>s/\\v:\\s*null/: None/g<CR>', { desc = 'Simple Python dict format' })
 
 vim.o.foldmethod = 'expr'
 vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
