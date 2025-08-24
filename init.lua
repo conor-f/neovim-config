@@ -1062,8 +1062,20 @@ local setup_ok, setup_err = pcall(function()
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
-  --  Load custom plugins from lua/custom/plugins/*.lua
-  { import = 'custom.plugins' },
+  -- Justfile support
+  {
+    'NoahTheDuke/vim-just',
+    ft = 'just', -- Load only for justfiles
+    config = function()
+      -- Auto-detect justfiles
+      vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
+        pattern = { 'justfile', 'Justfile', '.justfile' },
+        callback = function()
+          vim.bo.filetype = 'just'
+        end,
+      })
+    end,
+  },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
