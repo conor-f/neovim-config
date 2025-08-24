@@ -2,6 +2,18 @@ print('🚀 Loading Neovim configuration from Nix environment...')
 print('Config location: ' .. (os.getenv('XDG_CONFIG_HOME') or 'unknown'))
 print('NVIM_APPNAME: ' .. (os.getenv('NVIM_APPNAME') or 'none'))
 
+-- Fix Lua module paths for Nix environment
+local config_path = os.getenv('XDG_CONFIG_HOME') or vim.fn.stdpath('config')
+package.path = package.path .. ';' .. config_path .. '/lua/?.lua'
+package.path = package.path .. ';' .. config_path .. '/lua/?/init.lua'
+print('Updated Lua package.path for Nix store')
+
+-- Debug: Check if kickstart plugins exist
+local kickstart_debug_path = config_path .. '/lua/kickstart/plugins/debug.lua'
+local kickstart_exists = vim.fn.filereadable(kickstart_debug_path)
+print('Kickstart debug plugin exists: ' .. tostring(kickstart_exists == 1))
+print('Looking for: ' .. kickstart_debug_path)
+
 --[[
 
 =====================================================================
