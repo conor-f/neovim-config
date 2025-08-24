@@ -1,12 +1,16 @@
 print('🚀 Loading Neovim configuration from Nix environment...')
-print('Config location: ' .. (os.getenv('XDG_CONFIG_HOME') or 'unknown'))
-print('NVIM_APPNAME: ' .. (os.getenv('NVIM_APPNAME') or 'none'))
+print('Config loaded via -u flag from: ' .. (os.getenv('XDG_CONFIG_HOME') or 'unknown'))
+print('Data directory: ' .. vim.fn.stdpath('data'))
+print('State directory: ' .. vim.fn.stdpath('state'))
+print('Cache directory: ' .. vim.fn.stdpath('cache'))
 
 -- Fix Lua module paths for Nix environment
-local config_path = os.getenv('XDG_CONFIG_HOME') or vim.fn.stdpath('config')
+-- Since we're using -u flag, we need to get the config path from the file location
+local init_lua_path = debug.getinfo(1).source:match("@(.*)")
+local config_path = vim.fn.fnamemodify(init_lua_path, ':h')
 package.path = package.path .. ';' .. config_path .. '/lua/?.lua'
 package.path = package.path .. ';' .. config_path .. '/lua/?/init.lua'
-print('Updated Lua package.path for Nix store')
+print('Updated Lua package.path for Nix store: ' .. config_path)
 
 -- Debug: Check if kickstart plugins exist
 local kickstart_debug_path = config_path .. '/lua/kickstart/plugins/debug.lua'

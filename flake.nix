@@ -67,19 +67,19 @@
 
         # Create fully self-contained neovim with bundled config
         nvimWrapper = pkgs.writeShellScriptBin "nvim" ''
-          # Create writable directories in user's home for nvim data
-          export NVIM_APPNAME="nvim-nix-config"
-          export XDG_DATA_HOME="''${XDG_DATA_HOME:-$HOME/.local/share}"
-          export XDG_STATE_HOME="''${XDG_STATE_HOME:-$HOME/.local/state}" 
-          export XDG_CACHE_HOME="''${XDG_CACHE_HOME:-$HOME/.cache}"
+          # Set up writable directories in user's home for nvim data
+          # Use a different approach - don't set NVIM_APPNAME, instead set data paths directly
+          export XDG_DATA_HOME="$HOME/.local/share/nvim-nix-config"
+          export XDG_STATE_HOME="$HOME/.local/state/nvim-nix-config" 
+          export XDG_CACHE_HOME="$HOME/.cache/nvim-nix-config"
           
           # Create the directories if they don't exist
-          mkdir -p "$XDG_DATA_HOME/$NVIM_APPNAME"
-          mkdir -p "$XDG_STATE_HOME/$NVIM_APPNAME"
-          mkdir -p "$XDG_CACHE_HOME/$NVIM_APPNAME"
+          mkdir -p "$XDG_DATA_HOME"
+          mkdir -p "$XDG_STATE_HOME"
+          mkdir -p "$XDG_CACHE_HOME"
           
-          # Set up config from the Nix store - point directly to the config directory
-          export XDG_CONFIG_HOME="${self}"
+          # Don't set XDG_CONFIG_HOME to avoid conflicts
+          # Don't set NVIM_APPNAME to avoid directory creation in config path
           
           # Ensure all tools are in PATH
           export PATH="${pkgs.lib.makeBinPath allTools}:$PATH"
