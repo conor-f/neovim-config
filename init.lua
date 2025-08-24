@@ -208,12 +208,24 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
+
+-- Debug: Show data directory being used
+print('Data directory: ' .. vim.fn.stdpath 'data')
+print('Lazy path: ' .. lazypath)
+
+-- Ensure data directory exists
+vim.fn.mkdir(vim.fn.stdpath 'data', 'p')
+
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  print('Lazy.nvim not found, cloning...')
   local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
   local out = vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
   if vim.v.shell_error ~= 0 then
     error('Error cloning lazy.nvim:\n' .. out)
   end
+  print('Lazy.nvim cloned successfully')
+else
+  print('Lazy.nvim found at: ' .. lazypath)
 end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
@@ -228,6 +240,7 @@ vim.opt.rtp:prepend(lazypath)
 --    :Lazy update
 --
 -- NOTE: Here is where you install your plugins.
+print('Setting up Lazy.nvim plugins...')
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
@@ -997,6 +1010,17 @@ require('lazy').setup({
   -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
   -- you can continue same window with `<space>sr` which resumes last telescope search
 }, {
+  -- Configuration for Lazy.nvim behavior
+  install = {
+    -- Install missing plugins on startup
+    missing = true,
+    -- Install colorschemes even when not loaded
+    colorscheme = { 'tokyonight', 'habamax' },
+  },
+  checker = {
+    -- Automatically check for plugin updates
+    enabled = false, -- Disable in Nix environment
+  },
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
     -- default lazy.nvim defined Nerd Font icons, otherwise define a unicode icons table
