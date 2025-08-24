@@ -42,11 +42,11 @@ nix run .
 nix profile install .
 ```
 
-### Method 2: Run from GitHub (if you push this to a repo)
+### Method 2: Run from GitHub
 
 ```bash
-# Replace with your actual GitHub repo
-nix run github:yourusername/neovim-config
+# Run directly from GitHub
+nix run github:conor-f/neovim-config
 ```
 
 ### Method 3: Development Shell

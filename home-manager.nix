@@ -7,8 +7,8 @@ let
   # Import your Neovim flake
   nvimFlake = builtins.getFlake "path:/Users/personal/.config/nvim";
   
-  # Or if you move it to a git repo, use:
-  # nvimFlake = builtins.getFlake "github:yourusername/neovim-config";
+  # Or use the GitHub repo directly:
+  # nvimFlake = builtins.getFlake "github:conor-f/neovim-config";
   
 in {
   # Option 1: Use the flake package directly
