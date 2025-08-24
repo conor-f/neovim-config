@@ -78,14 +78,14 @@
           mkdir -p "$XDG_STATE_HOME/$NVIM_APPNAME"
           mkdir -p "$XDG_CACHE_HOME/$NVIM_APPNAME"
           
-          # Set up config from the Nix store (read-only)
+          # Set up config from the Nix store - point directly to the config directory
           export XDG_CONFIG_HOME="${self}"
           
           # Ensure all tools are in PATH
           export PATH="${pkgs.lib.makeBinPath allTools}:$PATH"
           
-          # Run neovim with the bundled config
-          exec ${pkgs.neovim}/bin/nvim "$@"
+          # Run neovim with the bundled config, specifying the correct config path
+          exec ${pkgs.neovim}/bin/nvim -u "${self}/init.lua" "$@"
         '';
 
       in {
