@@ -278,7 +278,18 @@ print('Lazy.nvim loaded successfully')
 --
 -- NOTE: Here is where you install your plugins.
 print('Setting up Lazy.nvim plugins...')
-require('lazy').setup({
+
+-- Test that we can actually require lazy
+local lazy_status, lazy_err = pcall(require, 'lazy')
+if not lazy_status then
+  error('Failed to require lazy in setup: ' .. tostring(lazy_err))
+end
+print('Successfully required lazy, calling setup...')
+
+-- Setup lazy with full configuration
+print('Running full lazy setup...')
+local setup_ok, setup_err = pcall(function()
+  require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
 
@@ -1077,7 +1088,14 @@ require('lazy').setup({
       lazy = '💤 ',
     },
   },
-})
+  })
+end)
+
+if not setup_ok then
+  error('Failed to setup lazy.nvim: ' .. tostring(setup_err))
+end
+
+print('✅ Lazy.nvim setup completed successfully!')
 
 -- Custom formatting keybindings
 vim.keymap.set('v', '<leader>fj', function()
