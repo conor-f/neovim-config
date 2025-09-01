@@ -679,53 +679,39 @@ local setup_ok, setup_err = pcall(function()
       --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
-      local servers = {
-        -- Language servers for comprehensive development support
-        
-        -- Web development
-        ts_ls = {}, -- TypeScript/JavaScript
-        html = {}, -- HTML
-        cssls = {}, -- CSS
-        jsonls = {}, -- JSON
-        
-        -- React/JSX support via TypeScript server
-        -- ts_ls handles JSX and TSX files
-        
-        -- Python
-        pyright = {
-          settings = {
-            python = {
-              analysis = {
-                autoSearchPaths = true,
-                useLibraryCodeForTypes = true,
-                diagnosticMode = 'workspace',
-              },
-            },
-          },
-        },
-        
+      -- Configure language servers that are available in PATH (provided by Nix)
+      -- We'll set up LSP servers manually instead of relying on Mason for everything
+      local lspconfig = require 'lspconfig'
+      
+      -- Set up language servers directly
+      local servers_to_setup = {
+        -- TypeScript/JavaScript
+        'ts_ls',
+        -- Python  
+        'pyright',
+        -- Lua
+        'lua_ls',
+        -- Shell
+        'bashls',
         -- Docker
-        dockerls = {},
-        docker_compose_language_service = {},
-        
-        -- YAML
-        yamlls = {
-          settings = {
-            yaml = {
-              schemas = {
-                ['https://json.schemastore.org/github-workflow.json'] = '/.github/workflows/*',
-                ['https://json.schemastore.org/docker-compose.json'] = '/docker-compose*.yml',
-              },
-            },
-          },
-        },
-        
-        -- Shell scripting
-        bashls = {},
-        
-        -- Vue.js support via TypeScript server (volar removed due to availability issues)
-        
-        -- Lua (for Neovim configuration)
+        'dockerls',
+      }
+      
+      -- HTML, CSS, JSON are provided by vscode-langservers-extracted
+      -- We'll set these up with specific names
+      local vscode_servers = {
+        'html',
+        'cssls', 
+        'jsonls',
+      }
+      
+      -- YAML server
+      local yaml_servers = {
+        'yamlls',
+      }
+      
+      -- Basic server configuration
+      local servers = {
         lua_ls = {
           settings = {
             Lua = {
@@ -737,38 +723,75 @@ local setup_ok, setup_err = pcall(function()
             },
           },
         },
-      }
-
-      -- Ensure the servers and tools above are installed
-      --  To check the current status of installed tools and/or manually install
-      --  other tools, you can run
-      --    :Mason
-      --
-      --  You can press `g?` for help in this menu.
-      require('mason').setup()
-
-      -- You can add other tools here that you want Mason to install
-      -- for you, so that they are available from within Neovim.
-      local ensure_installed = vim.tbl_keys(servers or {})
-      -- Only add tools that aren't already provided by Nix
-      -- Most tools are provided by the Nix environment
-      vim.list_extend(ensure_installed, {
-        -- Any tools that might be missing from Nix can be added here
-      })
-      require('mason-tool-installer').setup { ensure_installed = ensure_installed }
-
-      require('mason-lspconfig').setup {
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
+        pyright = {
+          settings = {
+            python = {
+              analysis = {
+                autoSearchPaths = true,
+                useLibraryCodeForTypes = true,
+                diagnosticMode = 'workspace',
+              },
+            },
+          },
+        },
+        yamlls = {
+          settings = {
+            yaml = {
+              schemas = {
+                ['https://json.schemastore.org/github-workflow.json'] = '/.github/workflows/*',
+                ['https://json.schemastore.org/docker-compose.json'] = '/docker-compose*.yml',
+              },
+            },
+          },
         },
       }
+
+      -- Set up Mason for tools that aren't provided by Nix
+      require('mason').setup()
+      
+      -- Don't try to install language servers via Mason since they're provided by Nix
+      require('mason-tool-installer').setup { 
+        ensure_installed = {}  -- Empty - all tools provided by Nix
+      }
+
+      -- Set up language servers directly using lspconfig
+      -- These servers are available in PATH from Nix
+      for server_name, server_config in pairs(servers) do
+        local config = vim.tbl_deep_extend('force', {
+          capabilities = capabilities,
+        }, server_config or {})
+        
+        lspconfig[server_name].setup(config)
+      end
+      
+      -- Set up additional servers that don't need special config
+      for _, server_name in ipairs(servers_to_setup) do
+        if not servers[server_name] then
+          lspconfig[server_name].setup({
+            capabilities = capabilities,
+          })
+        end
+      end
+      
+      -- Set up vscode-langservers-extracted servers
+      for _, server_name in ipairs(vscode_servers) do
+        lspconfig[server_name].setup({
+          capabilities = capabilities,
+        })
+      end
+      
+      -- Set up YAML server
+      for _, server_name in ipairs(yaml_servers) do
+        if not servers[server_name] then
+          lspconfig[server_name].setup({
+            capabilities = capabilities,
+          })
+        else
+          lspconfig[server_name].setup(vim.tbl_deep_extend('force', {
+            capabilities = capabilities,
+          }, servers[server_name]))
+        end
+      end
     end,
   },
 
