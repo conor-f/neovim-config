@@ -1,22 +1,9 @@
-print('🚀 Loading Neovim configuration from Nix environment...')
-print('Config loaded via -u flag from: ' .. (os.getenv('XDG_CONFIG_HOME') or 'unknown'))
-print('Data directory: ' .. vim.fn.stdpath('data'))
-print('State directory: ' .. vim.fn.stdpath('state'))
-print('Cache directory: ' .. vim.fn.stdpath('cache'))
-
 -- Fix Lua module paths for Nix environment
 -- Since we're using -u flag, we need to get the config path from the file location
 local init_lua_path = debug.getinfo(1).source:match("@(.*)")
 local config_path = vim.fn.fnamemodify(init_lua_path, ':h')
 package.path = package.path .. ';' .. config_path .. '/lua/?.lua'
 package.path = package.path .. ';' .. config_path .. '/lua/?/init.lua'
-print('Updated Lua package.path for Nix store: ' .. config_path)
-
--- Debug: Check if kickstart plugins exist
-local kickstart_debug_path = config_path .. '/lua/kickstart/plugins/debug.lua'
-local kickstart_exists = vim.fn.filereadable(kickstart_debug_path)
-print('Kickstart debug plugin exists: ' .. tostring(kickstart_exists == 1))
-print('Looking for: ' .. kickstart_debug_path)
 
 --[[
 
@@ -122,11 +109,8 @@ vim.g.have_nerd_font = true
 --  For more options, you can see `:help option-list`
 
 -- Make line numbers default
-print('Setting up basic Neovim options...')
 vim.opt.number = true
 vim.opt.relativenumber = true
-print('Line numbers enabled: ' .. tostring(vim.opt.number:get()))
-print('Relative numbers enabled: ' .. tostring(vim.opt.relativenumber:get()))
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = ''
@@ -232,55 +216,17 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
 
--- Debug: Show data directory being used
-print('Data directory: ' .. vim.fn.stdpath 'data')
-print('Lazy path: ' .. lazypath)
-
 -- Ensure data directory exists
 vim.fn.mkdir(vim.fn.stdpath 'data', 'p')
 
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  print('Lazy.nvim not found, cloning...')
-  
-  -- Check if git is available
-  local git_check = vim.fn.system('which git')
-  if vim.v.shell_error ~= 0 then
-    error('Git not found in PATH. Git is required to install plugins.')
-  end
-  print('Git found: ' .. vim.trim(git_check))
-  
   local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
-  print('Cloning from: ' .. lazyrepo)
-  print('To: ' .. lazypath)
-  
   local out = vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
-  print('Git output: ' .. out)
-  
   if vim.v.shell_error ~= 0 then
-    error('Error cloning lazy.nvim (exit code: ' .. vim.v.shell_error .. '):\n' .. out)
+    error('Error cloning lazy.nvim:\n' .. out)
   end
-  
-  -- Verify the clone worked
-  if (vim.uv or vim.loop).fs_stat(lazypath) then
-    print('Lazy.nvim cloned successfully')
-  else
-    error('Lazy.nvim clone appeared to succeed but directory not found: ' .. lazypath)
-  end
-else
-  print('Lazy.nvim found at: ' .. lazypath)
-end
-
--- Add to runtime path
-print('Adding to runtimepath: ' .. lazypath)
----@diagnostic disable-next-line: undefined-field
+end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
-
--- Test that lazy is actually loadable
-local lazy_ok, lazy = pcall(require, 'lazy')
-if not lazy_ok then
-  error('Failed to load lazy.nvim after adding to rtp: ' .. tostring(lazy))
-end
-print('Lazy.nvim loaded successfully')
 
 -- [[ Configure and install plugins ]]
 --
@@ -293,19 +239,7 @@ print('Lazy.nvim loaded successfully')
 --    :Lazy update
 --
 -- NOTE: Here is where you install your plugins.
-print('Setting up Lazy.nvim plugins...')
-
--- Test that we can actually require lazy
-local lazy_status, lazy_err = pcall(require, 'lazy')
-if not lazy_status then
-  error('Failed to require lazy in setup: ' .. tostring(lazy_err))
-end
-print('Successfully required lazy, calling setup...')
-
--- Setup lazy with full configuration
-print('Running full lazy setup...')
-local setup_ok, setup_err = pcall(function()
-  require('lazy').setup({
+require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
 
@@ -1136,14 +1070,7 @@ local setup_ok, setup_err = pcall(function()
       lazy = '💤 ',
     },
   },
-  })
-end)
-
-if not setup_ok then
-  error('Failed to setup lazy.nvim: ' .. tostring(setup_err))
-end
-
-print('✅ Lazy.nvim setup completed successfully!')
+})
 
 -- Custom formatting keybindings
 vim.keymap.set('v', '<leader>fj', function()
