@@ -723,8 +723,7 @@ local setup_ok, setup_err = pcall(function()
         -- Shell scripting
         bashls = {},
         
-        -- Vue.js
-        volar = {},
+        -- Vue.js support via TypeScript server (volar removed due to availability issues)
         
         -- Lua (for Neovim configuration)
         lua_ls = {
@@ -754,9 +753,7 @@ local setup_ok, setup_err = pcall(function()
       -- Only add tools that aren't already provided by Nix
       -- Most tools are provided by the Nix environment
       vim.list_extend(ensure_installed, {
-        -- Vue language server (not available in our Nix setup)
-        'vue-language-server',
-        -- Any other tools that might be missing can be added here
+        -- Any tools that might be missing from Nix can be added here
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
