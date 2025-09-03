@@ -38,6 +38,17 @@
           jq              # JSON processor/formatter
         ];
 
+        # Linters
+        linters = with pkgs; [
+          nodePackages.eslint_d    # Fast ESLint daemon
+          python3Packages.flake8   # Python linter
+          shellcheck              # Shell script linter
+          hadolint                # Dockerfile linter
+          yamllint                # YAML linter
+          nodePackages.jsonlint   # JSON linter
+          markdownlint-cli        # Markdown linter
+        ];
+
         # Additional tools
         additionalTools = with pkgs; [
           # Core tools
@@ -63,7 +74,7 @@
         ];
 
         # All tools combined
-        allTools = lspServers ++ formatters ++ additionalTools;
+        allTools = lspServers ++ formatters ++ linters ++ additionalTools;
 
         # Create fully self-contained neovim with bundled config
         nvimWrapper = pkgs.writeShellScriptBin "nvim" ''
@@ -102,6 +113,7 @@
             echo "🚀 Neovim config development environment!"
             echo "📦 Available language servers: typescript, html/css/json, yaml, dockerfile, bash, python, lua"
             echo "🎨 Available formatters: prettier, black, stylua, shfmt, jq"
+            echo "🔍 Available linters: eslint_d, flake8, shellcheck, hadolint, yamllint, jsonlint, markdownlint"
             echo "🔧 Additional tools: ripgrep, fd, fzf, git, just"
             echo ""
             echo "💡 This shell is for developing the config itself"

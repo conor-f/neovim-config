@@ -765,12 +765,12 @@ require('lazy').setup({
         -- Lua
         lua = { 'stylua' },
         
-        -- Web development
-        javascript = { 'prettierd', 'prettier', stop_after_first = true },
-        typescript = { 'prettierd', 'prettier', stop_after_first = true },
-        javascriptreact = { 'prettierd', 'prettier', stop_after_first = true },
-        typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
-        vue = { 'prettierd', 'prettier', stop_after_first = true },
+        -- Web development (Prettier first, then ESLint auto-fix)
+        javascript = { 'prettierd', 'prettier', 'eslint_d' },
+        typescript = { 'prettierd', 'prettier', 'eslint_d' },
+        javascriptreact = { 'prettierd', 'prettier', 'eslint_d' },
+        typescriptreact = { 'prettierd', 'prettier', 'eslint_d' },
+        vue = { 'prettierd', 'prettier', 'eslint_d' },
         css = { 'prettierd', 'prettier', stop_after_first = true },
         html = { 'prettierd', 'prettier', stop_after_first = true },
         json = { 'prettierd', 'prettier', stop_after_first = true },
@@ -788,6 +788,12 @@ require('lazy').setup({
         
         -- Docker
         dockerfile = { 'dprint', stop_after_first = true },
+      },
+      formatters = {
+        -- Configure ESLint to run in fix mode as a formatter
+        eslint_d = {
+          args = { '--fix-to-stdout', '--stdin', '--stdin-filename', '$FILENAME' },
+        },
       },
     },
   },
