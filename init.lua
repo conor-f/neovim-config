@@ -1,6 +1,6 @@
 -- Fix Lua module paths for Nix environment
 -- Since we're using -u flag, we need to get the config path from the file location
-local init_lua_path = debug.getinfo(1).source:match("@(.*)")
+local init_lua_path = debug.getinfo(1).source:match '@(.*)'
 local config_path = vim.fn.fnamemodify(init_lua_path, ':h')
 package.path = package.path .. ';' .. config_path .. '/lua/?.lua'
 package.path = package.path .. ';' .. config_path .. '/lua/?/init.lua'
@@ -616,12 +616,12 @@ require('lazy').setup({
       -- Configure language servers that are available in PATH (provided by Nix)
       -- We'll set up LSP servers manually instead of relying on Mason for everything
       local lspconfig = require 'lspconfig'
-      
+
       -- Set up language servers directly
       local servers_to_setup = {
         -- TypeScript/JavaScript
         'ts_ls',
-        -- Python  
+        -- Python
         'pyright',
         -- Lua
         'lua_ls',
@@ -630,20 +630,20 @@ require('lazy').setup({
         -- Docker
         'dockerls',
       }
-      
+
       -- HTML, CSS, JSON are provided by vscode-langservers-extracted
       -- We'll set these up with specific names
       local vscode_servers = {
         'html',
-        'cssls', 
+        'cssls',
         'jsonls',
       }
-      
+
       -- YAML server
       local yaml_servers = {
         'yamlls',
       }
-      
+
       -- Basic server configuration
       local servers = {
         lua_ls = {
@@ -682,10 +682,10 @@ require('lazy').setup({
 
       -- Set up Mason for tools that aren't provided by Nix
       require('mason').setup()
-      
+
       -- Don't try to install language servers via Mason since they're provided by Nix
-      require('mason-tool-installer').setup { 
-        ensure_installed = {}  -- Empty - all tools provided by Nix
+      require('mason-tool-installer').setup {
+        ensure_installed = {}, -- Empty - all tools provided by Nix
       }
 
       -- Set up language servers directly using lspconfig
@@ -694,32 +694,32 @@ require('lazy').setup({
         local config = vim.tbl_deep_extend('force', {
           capabilities = capabilities,
         }, server_config or {})
-        
+
         lspconfig[server_name].setup(config)
       end
-      
+
       -- Set up additional servers that don't need special config
       for _, server_name in ipairs(servers_to_setup) do
         if not servers[server_name] then
-          lspconfig[server_name].setup({
+          lspconfig[server_name].setup {
             capabilities = capabilities,
-          })
+          }
         end
       end
-      
+
       -- Set up vscode-langservers-extracted servers
       for _, server_name in ipairs(vscode_servers) do
-        lspconfig[server_name].setup({
+        lspconfig[server_name].setup {
           capabilities = capabilities,
-        })
+        }
       end
-      
+
       -- Set up YAML server
       for _, server_name in ipairs(yaml_servers) do
         if not servers[server_name] then
-          lspconfig[server_name].setup({
+          lspconfig[server_name].setup {
             capabilities = capabilities,
-          })
+          }
         else
           lspconfig[server_name].setup(vim.tbl_deep_extend('force', {
             capabilities = capabilities,
@@ -764,7 +764,7 @@ require('lazy').setup({
       formatters_by_ft = {
         -- Lua
         lua = { 'stylua' },
-        
+
         -- Web development (Prettier first, then ESLint auto-fix)
         javascript = { 'prettierd', 'prettier', 'eslint_d' },
         typescript = { 'prettierd', 'prettier', 'eslint_d' },
@@ -775,17 +775,17 @@ require('lazy').setup({
         html = { 'prettierd', 'prettier', stop_after_first = true },
         json = { 'prettierd', 'prettier', stop_after_first = true },
         jsonc = { 'prettierd', 'prettier', stop_after_first = true },
-        
+
         -- Python (run isort first, then black)
         python = { 'isort', 'black' },
-        
+
         -- YAML
         yaml = { 'prettierd', 'prettier', stop_after_first = true },
-        
+
         -- Shell scripts
         sh = { 'shfmt' },
         bash = { 'shfmt' },
-        
+
         -- Docker
         dockerfile = { 'dprint', stop_after_first = true },
       },
@@ -978,11 +978,29 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 
-        'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc',
+      ensure_installed = {
+        'bash',
+        'c',
+        'diff',
+        'html',
+        'lua',
+        'luadoc',
+        'markdown',
+        'markdown_inline',
+        'query',
+        'vim',
+        'vimdoc',
         -- Additional languages for comprehensive support
-        'javascript', 'typescript', 'tsx', 'css', 'json', 'yaml', 
-        'python', 'dockerfile', 'vue', 'just'
+        'javascript',
+        'typescript',
+        'tsx',
+        'css',
+        'json',
+        'yaml',
+        'python',
+        'dockerfile',
+        'vue',
+        'just',
         -- Note: jsx parser is not available, tsx handles JSX in TypeScript files
       },
       -- Autoinstall languages that are not installed
@@ -1081,19 +1099,19 @@ require('lazy').setup({
 -- Custom formatting keybindings
 vim.keymap.set('v', '<leader>fj', function()
   -- Simple JSON formatting for visual selection
-  vim.cmd([[:'<,'>s/\v(['"])?(\w+)\1:/"\2":/g]])
-  vim.cmd([[:'<,'>s/'/"/g]])
-  vim.cmd([[:'<,'>s/\v:\s*true/: true/g]])
-  vim.cmd([[:'<,'>s/\v:\s*false/: false/g]])
-  vim.cmd([[:'<,'>s/\v:\s*None/: null/g]])
+  vim.cmd [[:'<,'>s/\v(['"])?(\w+)\1:/"\2":/g]]
+  vim.cmd [[:'<,'>s/'/"/g]]
+  vim.cmd [[:'<,'>s/\v:\s*true/: true/g]]
+  vim.cmd [[:'<,'>s/\v:\s*false/: false/g]]
+  vim.cmd [[:'<,'>s/\v:\s*None/: null/g]]
 end, { desc = '[F]ormat selection as [J]SON' })
 
 vim.keymap.set('v', '<leader>fp', function()
   -- Simple Python dict formatting for visual selection
-  vim.cmd([[:'<,'>s/"/'/g]])
-  vim.cmd([[:'<,'>s/\v:\s*true/: True/g]])
-  vim.cmd([[:'<,'>s/\v:\s*false/: False/g]])
-  vim.cmd([[:'<,'>s/\v:\s*null/: None/g]])
+  vim.cmd [[:'<,'>s/"/'/g]]
+  vim.cmd [[:'<,'>s/\v:\s*true/: True/g]]
+  vim.cmd [[:'<,'>s/\v:\s*false/: False/g]]
+  vim.cmd [[:'<,'>s/\v:\s*null/: None/g]]
 end, { desc = '[F]ormat selection as [P]ython dict' })
 
 vim.o.foldmethod = 'expr'
@@ -1101,3 +1119,15 @@ vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+
+-- Function to automatically format Markdown files
+vim.api.nvim_create_augroup('MarkdownAutoFormat', { clear = true })
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'markdown',
+  callback = function()
+    vim.opt_local.textwidth = 80
+    vim.opt_local.formatoptions:append 't'
+  end,
+  group = 'MarkdownAutoFormat',
+})
