@@ -60,17 +60,20 @@
           unzip
           gcc
           gnumake
-          
+
           # Language runtimes needed by language servers
           nodejs
           python3
           python3Packages.pip
-          
+
           # Just for justfile support
           just
-          
+
           # Tree-sitter CLI for parser management
           tree-sitter
+
+          # Debug adapters
+          delve  # Go debugger (used by nvim-dap-go)
         ];
 
         # All tools combined
