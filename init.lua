@@ -1115,7 +1115,8 @@ vim.keymap.set('v', '<leader>fp', function()
 end, { desc = '[F]ormat selection as [P]ython dict' })
 
 vim.o.foldmethod = 'expr'
-vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
+vim.o.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+vim.o.foldlevelstart = 99
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
