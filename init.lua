@@ -209,7 +209,9 @@ require('lazy').setup({
           map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
           map('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
           map('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
-          map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
+          vim.keymap.set('n', '<leader>rn', function()
+            return ':IncRename ' .. vim.fn.expand '<cword>'
+          end, { buffer = event.buf, expr = true, desc = 'LSP: [R]e[n]ame (inc-rename)' })
           map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction', { 'n', 'x' })
           map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
 
@@ -410,6 +412,7 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
     main = 'nvim-treesitter.configs',
+    dependencies = { 'nvim-treesitter/nvim-treesitter-textobjects' },
     opts = {
       ensure_installed = {
         'bash',
@@ -441,6 +444,43 @@ require('lazy').setup({
       },
       indent = { enable = true, disable = { 'ruby' } },
       fold = { enable = true },
+      textobjects = {
+        select = {
+          enable = true,
+          lookahead = true,
+          keymaps = {
+            ['af'] = '@function.outer',
+            ['if'] = '@function.inner',
+            ['ac'] = '@class.outer',
+            ['ic'] = '@class.inner',
+            ['aa'] = '@parameter.outer',
+            ['ia'] = '@parameter.inner',
+            ['ai'] = '@conditional.outer',
+            ['ii'] = '@conditional.inner',
+            ['al'] = '@loop.outer',
+            ['il'] = '@loop.inner',
+          },
+        },
+        move = {
+          enable = true,
+          set_jumps = true,
+          goto_next_start = {
+            [']f'] = '@function.outer',
+            [']c'] = '@class.outer',
+            [']a'] = '@parameter.inner',
+          },
+          goto_previous_start = {
+            ['[f'] = '@function.outer',
+            ['[c'] = '@class.outer',
+            ['[a'] = '@parameter.inner',
+          },
+        },
+        swap = {
+          enable = true,
+          swap_next = { ['<leader>xa'] = '@parameter.inner' },
+          swap_previous = { ['<leader>xA'] = '@parameter.inner' },
+        },
+      },
     },
   },
 
@@ -461,6 +501,113 @@ require('lazy').setup({
         end,
       })
     end,
+  },
+
+  { -- LSP rename with live preview (uses vim.opt.inccommand='split')
+    'smjonas/inc-rename.nvim',
+    cmd = 'IncRename',
+    opts = {},
+  },
+
+  { -- 2-char jump to anywhere visible.
+    'folke/flash.nvim',
+    event = 'VeryLazy',
+    opts = {},
+    keys = {
+      {
+        's',
+        mode = { 'n', 'x', 'o' },
+        function()
+          require('flash').jump()
+        end,
+        desc = 'Flash jump',
+      },
+      {
+        'S',
+        mode = { 'n', 'x', 'o' },
+        function()
+          require('flash').treesitter()
+        end,
+        desc = 'Flash Treesitter',
+      },
+      {
+        'r',
+        mode = 'o',
+        function()
+          require('flash').remote()
+        end,
+        desc = 'Remote Flash',
+      },
+      {
+        'R',
+        mode = { 'o', 'x' },
+        function()
+          require('flash').treesitter_search()
+        end,
+        desc = 'Treesitter Search',
+      },
+    },
+  },
+
+  { -- Smarter <C-a>/<C-x>: bools, dates, semver, custom toggles.
+    'monaqa/dial.nvim',
+    keys = {
+      {
+        '<C-a>',
+        function()
+          require('dial.map').manipulate 'increment'
+        end,
+        mode = 'n',
+        desc = 'Increment',
+      },
+      {
+        '<C-x>',
+        function()
+          require('dial.map').manipulate 'decrement'
+        end,
+        mode = 'n',
+        desc = 'Decrement',
+      },
+      {
+        '<C-a>',
+        function()
+          require('dial.map').manipulate('increment', 'visual')
+        end,
+        mode = 'x',
+        desc = 'Increment',
+      },
+      {
+        '<C-x>',
+        function()
+          require('dial.map').manipulate('decrement', 'visual')
+        end,
+        mode = 'x',
+        desc = 'Decrement',
+      },
+    },
+    config = function()
+      local augend = require 'dial.augend'
+      require('dial.config').augends:register_group {
+        default = {
+          augend.integer.alias.decimal,
+          augend.integer.alias.hex,
+          augend.date.alias['%Y-%m-%d'],
+          augend.constant.alias.bool,
+          augend.constant.new { elements = { 'and', 'or' }, word = true, cyclic = true },
+          augend.constant.new { elements = { '&&', '||' }, word = false, cyclic = true },
+          augend.constant.new { elements = { 'let', 'const' }, word = true, cyclic = true },
+          augend.constant.new { elements = { 'True', 'False' }, word = true, cyclic = true },
+          augend.semver.alias.semver,
+        },
+      }
+    end,
+  },
+
+  { -- In-buffer markdown rendering (headings, lists, code blocks).
+    'MeanderingProgrammer/render-markdown.nvim',
+    dependencies = { 'nvim-treesitter/nvim-treesitter' },
+    ft = { 'markdown' },
+    opts = {},
   },
 }, {
   install = {
