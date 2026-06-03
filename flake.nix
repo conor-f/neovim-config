@@ -22,30 +22,27 @@
         ]) ++ (with pkgs; [
           # Other language servers
           lua-language-server
-          pyright  # Python language server
-          # Note: Vue language server (volar) needs to be installed via Mason in Neovim
-          # as the Nix package is deprecated
+          ty         # Python type checker / LSP (Astral, preview)
+          nixd       # Nix LSP
+          marksman   # Markdown LSP
         ]);
 
-        # Formatters and linters
+        # Formatters
         formatters = with pkgs; [
           stylua          # Lua formatter
-          prettierd       # Fast prettier
-          nodePackages.prettier  # Prettier fallback
-          black           # Python formatter
-          isort           # Python import sorter
+          prettierd       # Fast prettier daemon
+          ruff            # Python formatter + import sorter
           shfmt           # Shell formatter
           jq              # JSON processor/formatter
         ];
 
         # Linters
         linters = with pkgs; [
-          nodePackages.eslint_d    # Fast ESLint daemon
-          python3Packages.flake8   # Python linter
+          nodePackages.eslint_d   # Fast ESLint daemon
+          ruff                    # Python linter (also above as formatter)
           shellcheck              # Shell script linter
           hadolint                # Dockerfile linter
           yamllint                # YAML linter
-          nodePackages.jsonlint   # JSON linter
           markdownlint-cli        # Markdown linter
         ];
 
@@ -71,9 +68,6 @@
 
           # Tree-sitter CLI for parser management
           tree-sitter
-
-          # Debug adapters
-          delve  # Go debugger (used by nvim-dap-go)
         ];
 
         # All tools combined
@@ -97,6 +91,9 @@
           
           # Ensure all tools are in PATH
           export PATH="${pkgs.lib.makeBinPath allTools}:$PATH"
+
+          # Workaround for marksman aborting on macOS due to .NET ICU lookup
+          export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
           
           # Run neovim with the bundled config, specifying the correct config path
           exec ${pkgs.neovim}/bin/nvim -u "${self}/init.lua" "$@"
@@ -114,10 +111,10 @@
           
           shellHook = ''
             echo "🚀 Neovim config development environment!"
-            echo "📦 Available language servers: typescript, html/css/json, yaml, dockerfile, bash, python, lua"
-            echo "🎨 Available formatters: prettier, black, stylua, shfmt, jq"
-            echo "🔍 Available linters: eslint_d, flake8, shellcheck, hadolint, yamllint, jsonlint, markdownlint"
-            echo "🔧 Additional tools: ripgrep, fd, fzf, git, just"
+            echo "📦 LSPs: typescript, html/css/json, yaml, dockerfile, bash, lua, ty, nixd, marksman"
+            echo "🎨 Formatters: prettierd, ruff, stylua, shfmt, jq"
+            echo "🔍 Linters: eslint_d, ruff, shellcheck, hadolint, yamllint, markdownlint"
+            echo "🔧 Tools: ripgrep, fd, fzf, git, just"
             echo ""
             echo "💡 This shell is for developing the config itself"
             echo "📝 Use 'nix run .' to test the bundled config"

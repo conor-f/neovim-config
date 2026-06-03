@@ -192,7 +192,7 @@ require('lazy').setup({
     'neovim/nvim-lspconfig',
     dependencies = {
       { 'j-hui/fidget.nvim', opts = {} },
-      'hrsh7th/cmp-nvim-lsp',
+      'saghen/blink.cmp',
     },
     config = function()
       vim.api.nvim_create_autocmd('LspAttach', {
@@ -245,23 +245,27 @@ require('lazy').setup({
         end,
       })
 
-      local capabilities = vim.lsp.protocol.make_client_capabilities()
-      capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
+      local capabilities = require('blink.cmp').get_lsp_capabilities()
+
+      local lspconfig = require 'lspconfig'
+
+      -- `ty` (Astral's Python type checker) is not yet in nvim-lspconfig; register manually.
+      local configs = require 'lspconfig.configs'
+      if not configs.ty then
+        configs.ty = {
+          default_config = {
+            cmd = { 'ty', 'server' },
+            filetypes = { 'python' },
+            root_dir = lspconfig.util.root_pattern('pyproject.toml', 'ruff.toml', 'ty.toml', '.git'),
+            single_file_support = true,
+          },
+        }
+      end
 
       -- All servers are provided by Nix and available on PATH.
       local servers = {
         ts_ls = {},
-        pyright = {
-          settings = {
-            python = {
-              analysis = {
-                autoSearchPaths = true,
-                useLibraryCodeForTypes = true,
-                diagnosticMode = 'workspace',
-              },
-            },
-          },
-        },
+        ty = {},
         lua_ls = {
           settings = {
             Lua = {
@@ -284,9 +288,10 @@ require('lazy').setup({
             },
           },
         },
+        nixd = {},
+        marksman = {},
       }
 
-      local lspconfig = require 'lspconfig'
       for name, cfg in pairs(servers) do
         lspconfig[name].setup(vim.tbl_deep_extend('force', { capabilities = capabilities }, cfg))
       end
@@ -326,35 +331,26 @@ require('lazy').setup({
         }
       end,
       formatters_by_ft = {
-        -- Lua
         lua = { 'stylua' },
 
-        -- Web development (Prettier first, then ESLint auto-fix)
-        javascript = { 'prettierd', 'prettier', 'eslint_d' },
-        typescript = { 'prettierd', 'prettier', 'eslint_d' },
-        javascriptreact = { 'prettierd', 'prettier', 'eslint_d' },
-        typescriptreact = { 'prettierd', 'prettier', 'eslint_d' },
-        vue = { 'prettierd', 'prettier', 'eslint_d' },
-        css = { 'prettierd', 'prettier', stop_after_first = true },
-        html = { 'prettierd', 'prettier', stop_after_first = true },
-        json = { 'prettierd', 'prettier', stop_after_first = true },
-        jsonc = { 'prettierd', 'prettier', stop_after_first = true },
+        -- Prettier formats, then eslint_d auto-fixes.
+        javascript = { 'prettierd', 'eslint_d' },
+        typescript = { 'prettierd', 'eslint_d' },
+        javascriptreact = { 'prettierd', 'eslint_d' },
+        typescriptreact = { 'prettierd', 'eslint_d' },
+        vue = { 'prettierd', 'eslint_d' },
+        css = { 'prettierd' },
+        html = { 'prettierd' },
+        json = { 'prettierd' },
+        jsonc = { 'prettierd' },
+        yaml = { 'prettierd' },
 
-        -- Python (run isort first, then black)
-        python = { 'isort', 'black' },
+        python = { 'ruff_organize_imports', 'ruff_format' },
 
-        -- YAML
-        yaml = { 'prettierd', 'prettier', stop_after_first = true },
-
-        -- Shell scripts
         sh = { 'shfmt' },
         bash = { 'shfmt' },
-
-        -- Docker
-        dockerfile = { 'dprint', stop_after_first = true },
       },
       formatters = {
-        -- Configure ESLint to run in fix mode as a formatter
         eslint_d = {
           args = { '--fix-to-stdout', '--stdin', '--stdin-filename', '$FILENAME' },
         },
@@ -363,62 +359,25 @@ require('lazy').setup({
   },
 
   { -- Autocompletion
-    'hrsh7th/nvim-cmp',
+    'saghen/blink.cmp',
     event = 'InsertEnter',
-    dependencies = {
-      {
-        'L3MON4D3/LuaSnip',
-        build = (function()
-          if vim.fn.has 'win32' == 1 or vim.fn.executable 'make' == 0 then
-            return
-          end
-          return 'make install_jsregexp'
-        end)(),
+    version = '*', -- use latest release for prebuilt fuzzy matcher binary
+    opts = {
+      keymap = {
+        preset = 'default', -- C-n/C-p select, C-y accept, C-space show
+        ['<C-l>'] = { 'snippet_forward', 'fallback' },
+        ['<C-h>'] = { 'snippet_backward', 'fallback' },
       },
-      'saadparwaiz1/cmp_luasnip',
-      'hrsh7th/cmp-nvim-lsp',
-      'hrsh7th/cmp-path',
+      appearance = { nerd_font_variant = 'mono' },
+      completion = { documentation = { auto_show = true, auto_show_delay_ms = 200 } },
+      sources = {
+        default = { 'lsp', 'path', 'snippets', 'buffer', 'lazydev' },
+        providers = {
+          lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
+        },
+      },
+      fuzzy = { implementation = 'prefer_rust_with_warning' },
     },
-    config = function()
-      local cmp = require 'cmp'
-      local luasnip = require 'luasnip'
-      luasnip.config.setup {}
-
-      cmp.setup {
-        snippet = {
-          expand = function(args)
-            luasnip.lsp_expand(args.body)
-          end,
-        },
-        completion = { completeopt = 'menu,menuone,noinsert' },
-
-        mapping = cmp.mapping.preset.insert {
-          ['<C-n>'] = cmp.mapping.select_next_item(),
-          ['<C-p>'] = cmp.mapping.select_prev_item(),
-          ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-          ['<C-f>'] = cmp.mapping.scroll_docs(4),
-          ['<C-y>'] = cmp.mapping.confirm { select = true },
-          ['<C-Space>'] = cmp.mapping.complete {},
-
-          ['<C-l>'] = cmp.mapping(function()
-            if luasnip.expand_or_locally_jumpable() then
-              luasnip.expand_or_jump()
-            end
-          end, { 'i', 's' }),
-          ['<C-h>'] = cmp.mapping(function()
-            if luasnip.locally_jumpable(-1) then
-              luasnip.jump(-1)
-            end
-          end, { 'i', 's' }),
-        },
-        sources = {
-          { name = 'lazydev', group_index = 0 },
-          { name = 'nvim_lsp' },
-          { name = 'luasnip' },
-          { name = 'path' },
-        },
-      }
-    end,
   },
 
   {
@@ -485,7 +444,6 @@ require('lazy').setup({
     },
   },
 
-  require 'kickstart.plugins.debug',
   require 'kickstart.plugins.indent_line',
   require 'kickstart.plugins.lint',
   require 'kickstart.plugins.autopairs',
