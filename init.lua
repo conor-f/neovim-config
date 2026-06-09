@@ -249,25 +249,15 @@ require('lazy').setup({
 
       local capabilities = require('blink.cmp').get_lsp_capabilities()
 
-      local lspconfig = require 'lspconfig'
-
-      -- `ty` (Astral's Python type checker) is not yet in nvim-lspconfig; register manually.
-      local configs = require 'lspconfig.configs'
-      if not configs.ty then
-        configs.ty = {
-          default_config = {
-            cmd = { 'ty', 'server' },
-            filetypes = { 'python' },
-            root_dir = lspconfig.util.root_pattern('pyproject.toml', 'ruff.toml', 'ty.toml', '.git'),
-            single_file_support = true,
-          },
-        }
-      end
-
       -- All servers are provided by Nix and available on PATH.
       local servers = {
         ts_ls = {},
-        ty = {},
+        -- `ty` (Astral's Python type checker) is not yet in nvim-lspconfig; configure manually.
+        ty = {
+          cmd = { 'ty', 'server' },
+          filetypes = { 'python' },
+          root_markers = { 'pyproject.toml', 'ruff.toml', 'ty.toml', '.git' },
+        },
         lua_ls = {
           settings = {
             Lua = {
@@ -295,7 +285,8 @@ require('lazy').setup({
       }
 
       for name, cfg in pairs(servers) do
-        lspconfig[name].setup(vim.tbl_deep_extend('force', { capabilities = capabilities }, cfg))
+        vim.lsp.config(name, vim.tbl_deep_extend('force', { capabilities = capabilities }, cfg))
+        vim.lsp.enable(name)
       end
     end,
   },
