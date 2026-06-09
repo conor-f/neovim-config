@@ -374,6 +374,9 @@ require('lazy').setup({
       completion = { documentation = { auto_show = true, auto_show_delay_ms = 200 } },
       sources = {
         default = { 'lsp', 'path', 'snippets', 'buffer', 'lazydev' },
+        per_filetype = {
+          markdown = { 'lsp', 'path', 'snippets', 'lazydev' },
+        },
         providers = {
           lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
         },
